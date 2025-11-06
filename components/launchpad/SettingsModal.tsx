@@ -116,7 +116,7 @@ export function SettingsModal({ controller }: SettingsModalProps) {
     try {
       window.localStorage.removeItem(VERSION_STORAGE_KEY);
     } catch (error) {
-      console.warn("Không thể xoá cache version trong localStorage", error);
+      console.warn("Unable to clear version cache from localStorage", error);
     }
 
     if (typeof caches !== "undefined") {
@@ -128,7 +128,7 @@ export function SettingsModal({ controller }: SettingsModalProps) {
             .map((key) => caches.delete(key))
         );
       } catch (error) {
-        console.warn("Không thể xoá cache assets của service worker", error);
+        console.warn("Unable to clear service worker asset cache", error);
       }
     }
 
@@ -154,7 +154,7 @@ export function SettingsModal({ controller }: SettingsModalProps) {
           });
         }
       } catch (error) {
-        console.warn("Không thể cập nhật service worker", error);
+        console.warn("Unable to refresh service worker", error);
       }
     }
 
@@ -170,9 +170,9 @@ export function SettingsModal({ controller }: SettingsModalProps) {
     resetBackupFeedback();
     const result = controller.exportBackup();
     if (result.success) {
-      setBackupMessage(result.message ?? "Đã xuất dữ liệu thành công.");
+      setBackupMessage(result.message ?? "Backup exported successfully.");
     } else {
-      setBackupError(result.message ?? "Xuất dữ liệu thất bại.");
+      setBackupError(result.message ?? "Export failed. Please try again.");
     }
   };
 
@@ -192,13 +192,13 @@ export function SettingsModal({ controller }: SettingsModalProps) {
       const parsed = JSON.parse(text);
       const result = controller.importBackup(parsed);
       if (result.success) {
-        setBackupMessage(result.message ?? "Đã nhập dữ liệu thành công.");
+        setBackupMessage(result.message ?? "Backup imported successfully.");
       } else {
-        setBackupError(result.message ?? "Import dữ liệu thất bại.");
+        setBackupError(result.message ?? "Import failed. Please try again.");
       }
     } catch (error) {
-      console.warn("Không thể đọc tệp sao lưu", error);
-      setBackupError("Tệp sao lưu không hợp lệ hoặc bị hỏng.");
+      console.warn("Unable to read backup file", error);
+      setBackupError("The backup file is invalid or corrupted.");
     } finally {
       setIsImporting(false);
       event.target.value = "";
@@ -487,10 +487,10 @@ export function SettingsModal({ controller }: SettingsModalProps) {
           <section className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
             <div className="space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Đồng bộ dữ liệu
+                Sync data
               </h3>
               <p className="text-sm text-slate-400">
-                Xuất tệp JSON để sao lưu hoặc nhập lại để đồng bộ giữa các thiết bị.
+                Export a JSON backup or import one to stay in sync across devices.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -499,7 +499,7 @@ export function SettingsModal({ controller }: SettingsModalProps) {
                 onClick={handleExportBackup}
                 className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40 sm:w-auto"
               >
-                Xuất dữ liệu
+                Export data
               </button>
               <button
                 type="button"
@@ -507,7 +507,7 @@ export function SettingsModal({ controller }: SettingsModalProps) {
                 disabled={isImporting}
                 className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
-                {isImporting ? "Đang nhập..." : "Nhập dữ liệu"}
+                {isImporting ? "Importing..." : "Import data"}
               </button>
             </div>
             {(backupMessage || backupError) && (

@@ -7,19 +7,19 @@ type ChangeLogModalProps = {
 };
 
 const DEFAULT_CHANGELOG = [
-  "Cải thiện hiệu năng tải trang và tối ưu hóa trải nghiệm người dùng.",
-  "Cập nhật giao diện để đồng bộ với phiên bản mới nhất của Launchpad.",
-  "Khắc phục một số lỗi nhỏ được báo cáo từ phiên bản trước.",
+  "Improved loading performance and refined the overall experience.",
+  "Refreshed the interface to match the latest Launchpad styling.",
+  "Fixed several minor issues reported in the previous release.",
 ];
 
 export function ChangeLogModal({ version, open, onClose }: ChangeLogModalProps) {
   return (
-    <Modal open={open} onClose={onClose} ariaLabel="Thay đổi phiên bản">
+    <Modal open={open} onClose={onClose} ariaLabel="Version changelog">
       <div className="flex w-full max-w-md flex-col gap-6 rounded-3xl border border-white/10 bg-slate-950/95 p-6 text-slate-100 shadow-2xl">
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-slate-50">Có gì mới?</h2>
+          <h2 className="text-lg font-semibold text-slate-50">What&apos;s new?</h2>
           <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
-            Phiên bản {version}
+            Version {version}
           </p>
         </div>
         <ul className="space-y-3 text-sm text-slate-300">
@@ -35,7 +35,7 @@ export function ChangeLogModal({ version, open, onClose }: ChangeLogModalProps) 
           onClick={onClose}
           className="self-end rounded-full bg-slate-200/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-slate-200 transition hover:bg-slate-200/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40"
         >
-          Đã hiểu
+          Got it
         </button>
       </div>
     </Modal>

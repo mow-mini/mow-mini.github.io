@@ -626,7 +626,7 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
     if (typeof window === "undefined") {
       return {
         success: false,
-        message: "Không thể xuất dữ liệu trong môi trường hiện tại.",
+        message: "Unable to export data in the current environment.",
       };
     }
     try {
@@ -651,13 +651,13 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
       URL.revokeObjectURL(url);
       return {
         success: true,
-        message: "Đã xuất dữ liệu thành công.",
+        message: "Backup exported successfully.",
       };
     } catch (error) {
       console.warn("Failed to export backup", error);
       return {
         success: false,
-        message: "Xuất dữ liệu thất bại. Vui lòng thử lại.",
+        message: "Export failed. Please try again.",
       };
     }
   }, [settings, userData]);
@@ -667,7 +667,7 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
       if (!data || typeof data !== "object") {
         return {
           success: false,
-          message: "Tệp sao lưu không hợp lệ.",
+          message: "The backup file is invalid.",
         };
       }
 
@@ -678,7 +678,7 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
       if (!rawSettings && !rawUserData) {
         return {
           success: false,
-          message: "Tệp sao lưu thiếu dữ liệu cần thiết.",
+          message: "The backup file is missing required data.",
         };
       }
 
@@ -744,7 +744,7 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
       if (!settingsUpdated && !userDataUpdated) {
         return {
           success: false,
-          message: "Không có thay đổi nào được áp dụng từ tệp sao lưu.",
+          message: "No changes were applied from the backup file.",
         };
       }
 
@@ -752,10 +752,10 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
         success: true,
         message:
           settingsUpdated && userDataUpdated
-            ? "Đã nhập cài đặt và dữ liệu ứng dụng thành công."
+            ? "Imported settings and app data successfully."
             : settingsUpdated
-              ? "Đã nhập cài đặt thành công."
-              : "Đã nhập dữ liệu ứng dụng thành công.",
+              ? "Imported settings successfully."
+              : "Imported app data successfully.",
       };
     },
     [settings.hasCompletedSetup]
