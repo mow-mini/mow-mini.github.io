@@ -69,6 +69,7 @@ jobs:
           if [ -f "out/index.html" ]; then
             cp out/index.html out/404.html
           fi
+          touch out/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
