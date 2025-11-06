@@ -36,20 +36,27 @@ jobs:
           VERSION="v${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}"
           echo "NEXT_PUBLIC_APP_VERSION=$VERSION" >> $GITHUB_ENV
           echo "Generated version: $VERSION"
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          REPO_NAME_LOWER="$(printf '%s' "$REPO_NAME" | tr '[:upper:]' '[:lower:]')"
+          if [[ "$REPO_NAME_LOWER" == *.github.io ]]; then
+            BASE_PATH=""
+            echo "Detected user/organisation Pages repository; base path disabled."
+          else
+            BASE_PATH="/$REPO_NAME"
+            echo "Base path set to $BASE_PATH"
+          fi
+          echo "NEXT_PUBLIC_BASE_PATH=$BASE_PATH" >> $GITHUB_ENV
 
       - name: Inject service worker version
         run: node scripts/inject-version.js
 
       - name: Export static site
         env:
-          NEXT_PUBLIC_BASE_PATH: "/${{ github.event.repository.name }}"
           GITHUB_PAGES: "true"
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: npm run export
 
       - name: Flatten export directory for GitHub Pages
-        env:
-          NEXT_PUBLIC_BASE_PATH: "/${{ github.event.repository.name }}"
         run: |
           TARGET="out${NEXT_PUBLIC_BASE_PATH}"
           if [ -n "$NEXT_PUBLIC_BASE_PATH" ] && [ -d "$TARGET" ]; then
