@@ -257,7 +257,7 @@ export function AddAppModal({ controller }: AddAppModalProps) {
                 <label
                   key={icon}
                   className={clsx(
-                    "group relative flex min-w-[92px] cursor-pointer flex-col items-center rounded-2xl border border-white/10 bg-slate-900/60 p-3 transition focus-within:border-sky-400 hover:border-sky-400 hover:bg-slate-900/80",
+                    "group relative flex min-w-[92px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-slate-900/60 p-3 transition focus-within:border-sky-400 hover:border-sky-400 hover:bg-slate-900/80",
                     formState.iconChoice === icon &&
                       "border-sky-400"
                   )}
@@ -283,7 +283,7 @@ export function AddAppModal({ controller }: AddAppModalProps) {
               ))}
               <label
                 className={clsx(
-                  "group relative flex min-w-[180px] cursor-pointer flex-col gap-3 rounded-2xl border border-dashed border-transparent bg-slate-900/60 p-3 text-sm text-slate-200 transition hover:border-sky-400/30 hover:bg-slate-900/80 focus-within:border-sky-400/60",
+                  "group relative flex min-w-[180px] cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-transparent bg-slate-900/60 p-3 text-sm text-slate-200 transition hover:border-sky-400/30 hover:bg-slate-900/80 focus-within:border-sky-400/60",
                   formState.iconChoice === "custom" &&
                     "border-sky-400"
                 )}
@@ -303,6 +303,7 @@ export function AddAppModal({ controller }: AddAppModalProps) {
                 </span>
                 <input
                   type="string"
+                  name="iconCustom"
                   value={formState.iconCustom}
                   onFocus={() =>
                     setFormState((prev) => ({ ...prev, iconChoice: "custom" }))
