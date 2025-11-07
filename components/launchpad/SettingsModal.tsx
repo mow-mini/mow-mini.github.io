@@ -8,7 +8,13 @@ import {
   type FormEvent,
 } from "react";
 import type { LaunchpadController } from "@hooks/useLaunchpadState";
-import { PRESET_BACKGROUND_OPTIONS, VERSION_STORAGE_KEY } from "@lib/constants";
+import {
+  MAX_PAGE_SIZE,
+  MIN_PAGE_SIZE,
+  PAGE_SIZE_STEP,
+  PRESET_BACKGROUND_OPTIONS,
+  VERSION_STORAGE_KEY,
+} from "@lib/constants";
 import CloseIcon from "@icons/CloseIcon";
 import GridIcon from "@icons/GridIcon";
 import ListIcon from "@icons/ListIcon";
@@ -16,9 +22,13 @@ import { Modal } from "@components/launchpad/Modal";
 
 type SettingsModalProps = {
   controller: LaunchpadController;
+  desktopPageSizeLimit?: number;
 };
 
-export function SettingsModal({ controller }: SettingsModalProps) {
+export function SettingsModal({
+  controller,
+  desktopPageSizeLimit,
+}: SettingsModalProps) {
   const [backgroundChoice, setBackgroundChoice] = useState<string>(
     controller.settings.backgroundImage &&
       PRESET_BACKGROUND_OPTIONS.includes(controller.settings.backgroundImage)
@@ -61,6 +71,9 @@ export function SettingsModal({ controller }: SettingsModalProps) {
   const [backupError, setBackupError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const desktopPageSizeMax = desktopPageSizeLimit
+    ? Math.max(MIN_PAGE_SIZE, Math.min(desktopPageSizeLimit, MAX_PAGE_SIZE))
+    : MAX_PAGE_SIZE;
 
   const {
     settings: controllerSettings,
@@ -393,11 +406,21 @@ export function SettingsModal({ controller }: SettingsModalProps) {
 
           {!controllerIsMobile && (
             <section className="space-y-3">
+              <div className="space-y-1">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Desktop page size
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  {desktopPageSizeLimit
+                    ? `Max items for this screen: ${desktopPageSizeMax}`
+                    : "Max items depend on your current screen size."}
+                </p>
+              </div>
               <SliderField
-                label="Desktop page size"
-                min={14}
-                max={56}
-                step={7}
+                label="Apps per page"
+                min={MIN_PAGE_SIZE}
+                max={desktopPageSizeMax}
+                step={PAGE_SIZE_STEP}
                 value={pageSize}
                 onChange={(value) => setPageSize(value)}
                 display={`${pageSize} apps`}

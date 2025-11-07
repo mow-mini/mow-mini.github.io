@@ -10,7 +10,13 @@ import {
 import { useLaunchpadState } from "@hooks/useLaunchpadState";
 import { useLaunchpadView } from "@hooks/useLaunchpadView";
 import { useMediaQuery } from "@hooks/useMediaQuery";
-import { MOBILE_BREAKPOINT, VERSION_STORAGE_KEY } from "@lib/constants";
+import {
+  MAX_PAGE_SIZE,
+  MIN_PAGE_SIZE,
+  MOBILE_BREAKPOINT,
+  PAGE_SIZE_STEP,
+  VERSION_STORAGE_KEY,
+} from "@lib/constants";
 import { APP_VERSION } from "@lib/version";
 import { AppCard } from "@components/launchpad/AppCard";
 import { ContextMenu } from "@components/launchpad/ContextMenu";
@@ -24,6 +30,10 @@ import { AddAppModal } from "@components/launchpad/AddAppModal";
 import { SettingsModal } from "@components/launchpad/SettingsModal";
 import { VersionBadge } from "@components/launchpad/VersionBadge";
 import { ChangeLogModal } from "@components/launchpad/ChangeLogModal";
+
+const DESKTOP_CARD_MIN_WIDTH = 170;
+const DESKTOP_CARD_MIN_HEIGHT = 140;
+const DESKTOP_GRID_VERTICAL_PADDING = 100;
 
 export function LaunchpadApp(): JSX.Element {
   const isMobileLayout = useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`);
@@ -65,56 +75,90 @@ export function LaunchpadApp(): JSX.Element {
     desktopPageSize,
     closeContextMenu,
     contextMenu,
+    setDesktopPageSize,
   } = controller;
-  const desktopGridLayout = useMemo(() => {
-    if (isMobileLayout) {
-      return null;
-    }
+  const desktopGridMetrics = useMemo(() => {
+    if (isMobileLayout) return null;
     const width = viewportSize.width;
-    if (!width) {
-      return null;
-    }
     const height = viewportSize.height;
-    const gap =
-      width >= 1280 ? 32 : width >= 1024 ? 28 : 24;
-    const minCardWidth = 160;
-    const minCardHeight = 160;
+    if (!width || !height) return null;
+    const gap = width >= 1280 ? 32 : width >= 1024 ? 28 : 24;
     const maxColumnsByWidth = Math.max(
       1,
-      Math.floor((width + gap) / (minCardWidth + gap))
+      Math.floor((width + gap) / (DESKTOP_CARD_MIN_WIDTH + gap))
     );
-    let columns = Math.min(
-      desktopPageSize,
-      Math.max(3, Math.round(Math.sqrt(desktopPageSize))),
-      maxColumnsByWidth
+    const availableHeight = Math.max(0, height - DESKTOP_GRID_VERTICAL_PADDING);
+    const maxRowsByHeight = Math.max(
+      1,
+      Math.floor((availableHeight + gap) / (DESKTOP_CARD_MIN_HEIGHT + gap))
     );
-    if (columns < 1) {
-      columns = 1;
-    }
-    let rows = Math.ceil(desktopPageSize / columns);
-    if (height) {
-      const maxRowsByHeight = Math.max(
-        1,
-        Math.floor((height + gap) / (minCardHeight + gap))
-      );
-      if (rows > maxRowsByHeight) {
-        rows = maxRowsByHeight;
-        columns = Math.min(
-          maxColumnsByWidth,
-          Math.max(1, Math.ceil(desktopPageSize / rows))
-        );
-      }
-    }
+    const rawLimit = Math.max(1, maxColumnsByWidth * maxRowsByHeight);
     return {
-      columns,
-      rows,
       gap,
+      maxColumnsByWidth,
+      maxRowsByHeight,
+      rawLimit,
+    };
+  }, [isMobileLayout, viewportSize.height, viewportSize.width]);
+
+  const desktopPageSizeLimit = useMemo(() => {
+    if (!desktopGridMetrics) return null;
+    const capped = Math.min(desktopGridMetrics.rawLimit, MAX_PAGE_SIZE);
+    if (capped <= MIN_PAGE_SIZE) {
+      return MIN_PAGE_SIZE;
+    }
+    const steps = Math.floor((capped - MIN_PAGE_SIZE) / PAGE_SIZE_STEP);
+    return MIN_PAGE_SIZE + steps * PAGE_SIZE_STEP;
+  }, [desktopGridMetrics]);
+
+  useEffect(() => {
+    if (
+      isMobileLayout ||
+      !desktopPageSizeLimit ||
+      desktopPageSize <= desktopPageSizeLimit
+    ) {
+      return;
+    }
+    setDesktopPageSize(desktopPageSizeLimit);
+  }, [
+    desktopPageSize,
+    desktopPageSizeLimit,
+    isMobileLayout,
+    setDesktopPageSize,
+  ]);
+
+  const desktopGridLayout = useMemo(() => {
+    if (isMobileLayout || !desktopGridMetrics) {
+      return null;
+    }
+    const targetSize = desktopPageSizeLimit
+      ? Math.min(desktopPageSize, desktopPageSizeLimit)
+      : desktopPageSize;
+    const { gap, maxColumnsByWidth, maxRowsByHeight } = desktopGridMetrics;
+    const preferredColumns = Math.max(
+      3,
+      Math.min(maxColumnsByWidth, Math.round(Math.sqrt(targetSize)))
+    );
+    const rows = Math.min(
+      maxRowsByHeight,
+      Math.max(1, Math.ceil(targetSize / preferredColumns))
+    );
+    const columns = Math.min(
+      maxColumnsByWidth,
+      Math.max(1, Math.ceil(targetSize / rows))
+    );
+    return {
       style: {
         gap: `${gap}px`,
         gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
       } as CSSProperties,
     };
-  }, [desktopPageSize, isMobileLayout, viewportSize.height, viewportSize.width]);
+  }, [
+    desktopGridMetrics,
+    desktopPageSize,
+    desktopPageSizeLimit,
+    isMobileLayout,
+  ]);
 
   const isContextMenuOpen = Boolean(contextMenu.appId);
   const contextMenuTargetId = contextMenu.appId;
@@ -128,7 +172,7 @@ export function LaunchpadApp(): JSX.Element {
     if (cachedVersion !== APP_VERSION) {
       setIsChangeLogOpen(true);
     }
-  }, [gridViewportRef]);
+  }, []);
 
   const handleCloseChangeLog = () => {
     setIsChangeLogOpen(false);
@@ -234,18 +278,22 @@ export function LaunchpadApp(): JSX.Element {
         >
           <div
             ref={pagesWrapperRef}
-            className="flex flex-1 flex-col transition-transform duration-500 ease-out lg:flex-row"
+            className={`flex flex-1 transition-transform duration-500 ease-out ${isMobileLayout ? "flex-col" : "flex-row"}`}
           >
             {pages.map((page, pageIndex) => (
               <div
                 key={pageIndex}
-                className={`flex w-full items-stretch ${isListLayout ? "justify-start" : "justify-center"} lg:h-full lg:shrink-0`}
+                className={`flex w-full items-stretch ${
+                  isListLayout ? "justify-start" : "justify-center"
+                } ${isMobileLayout ? "" : "h-full shrink-0"}`}
               >
                 <div
                   className={
                     isListLayout
                       ? "flex w-full flex-col gap-2"
-                      : "grid w-full gap-8 sm:gap-6 grid-cols-3 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-7"
+                      : isMobileLayout
+                        ? "grid w-full gap-8 sm:gap-6 grid-cols-3 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-7"
+                        : "grid w-full"
                   }
                   style={
                     !isListLayout && !isMobileLayout && desktopGridLayout
@@ -300,7 +348,10 @@ export function LaunchpadApp(): JSX.Element {
         </section>
       </main>
 
-      <SettingsModal controller={controller} />
+      <SettingsModal
+        controller={controller}
+        desktopPageSizeLimit={desktopPageSizeLimit ?? undefined}
+      />
       <AddAppModal controller={controller} />
       <HiddenAppsModal
         controller={controller}

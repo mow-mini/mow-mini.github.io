@@ -130,6 +130,7 @@ export type LaunchpadController = {
   resetActiveIndex: () => void;
   exportBackup: () => { success: boolean; message?: string };
   importBackup: (data: unknown) => { success: boolean; message?: string };
+  setDesktopPageSize: (size: number) => void;
 };
 
 const initialContextMenu: LaunchpadContextMenuState = {
@@ -349,6 +350,21 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
     },
     [filteredApps, isMobileLayout, desktopPageSize]
   );
+
+  const setDesktopPageSize = useCallback((size: number) => {
+    setUserData((prev) => {
+      const normalized = normalizePageSize(size);
+      if (prev.pageSize === normalized) {
+        return prev;
+      }
+      const next = {
+        ...prev,
+        pageSize: normalized,
+      };
+      saveUserDataToStorage(next);
+      return next;
+    });
+  }, []);
 
   const openApp = useCallback((app: LaunchpadApp) => {
     if (!app) return;
@@ -807,5 +823,6 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
     resetActiveIndex,
     exportBackup,
     importBackup,
+    setDesktopPageSize,
   };
 }
