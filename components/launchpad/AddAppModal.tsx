@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import clsx from "clsx";
 import type { LaunchpadController } from "@hooks/useLaunchpadState";
 import { DEFAULT_ICON } from "@lib/constants";
@@ -21,52 +21,6 @@ export function AddAppModal({ controller }: AddAppModalProps) {
   });
   const [feedback, setFeedback] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingTitle, setIsFetchingTitle] = useState(false);
-  const metadataRequestIdRef = useRef(0);
-
-  const fetchTitleForUrl = useCallback(
-    async (
-      rawUrl: string,
-      options: { shouldFillForm?: boolean } = {}
-    ): Promise<string> => {
-      const trimmedUrl = rawUrl.trim();
-      if (!trimmedUrl) return "";
-
-      const requestId = ++metadataRequestIdRef.current;
-      setIsFetchingTitle(true);
-
-      try {
-        const response = await fetch(
-          `/api/url-metadata?url=${encodeURIComponent(trimmedUrl)}`
-        );
-        if (!response.ok) {
-          return "";
-        }
-        const data: { title?: string } = await response.json();
-        const resolvedTitle =
-          typeof data.title === "string" ? data.title.trim() : "";
-
-        if (
-          resolvedTitle &&
-          options.shouldFillForm &&
-          metadataRequestIdRef.current === requestId
-        ) {
-          setFormState((prev) =>
-            prev.name.trim() ? prev : { ...prev, name: resolvedTitle }
-          );
-        }
-
-        return resolvedTitle;
-      } catch {
-        return "";
-      } finally {
-        if (metadataRequestIdRef.current === requestId) {
-          setIsFetchingTitle(false);
-        }
-      }
-    },
-    []
-  );
 
   useEffect(() => {
     if (!controller.modals.addApp) return;
@@ -96,8 +50,6 @@ export function AddAppModal({ controller }: AddAppModalProps) {
     }
     setFeedback("");
     setIsSubmitting(false);
-    setIsFetchingTitle(false);
-    metadataRequestIdRef.current = 0;
   }, [controller.modals.addApp, controller.editingApp, controller.iconLibrary]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -106,20 +58,15 @@ export function AddAppModal({ controller }: AddAppModalProps) {
     setIsSubmitting(true);
 
     try {
-      let resolvedName = formState.name.trim();
+      const resolvedName = formState.name.trim();
       if (!formState.url.trim()) {
         setFeedback("Please enter a URL.");
         return;
       }
 
       if (!resolvedName) {
-        resolvedName = await fetchTitleForUrl(formState.url, {
-          shouldFillForm: true,
-        });
-        if (!resolvedName) {
-          setFeedback("Unable to detect a title. Please add one manually.");
-          return;
-        }
+        setFeedback("Please enter a name.");
+        return;
       }
 
       const result = controller.submitCustomApp({
@@ -186,17 +133,9 @@ export function AddAppModal({ controller }: AddAppModalProps) {
               onChange={(event) =>
                 setFormState((prev) => ({ ...prev, url: event.target.value }))
               }
-              onBlur={() => {
-                if (!formState.name.trim()) {
-                  void fetchTitleForUrl(formState.url, { shouldFillForm: true });
-                }
-              }}
               className="rounded-2xl border border-white/10 bg-slate-900/40 px-4 py-2 text-base text-slate-100 placeholder:text-slate-500 focus:border-sky-400/40 focus:outline-none focus:ring-0"
               placeholder="https://example.com"
             />
-            {isFetchingTitle && (
-              <p className="text-xs text-slate-400">Fetching site title…</p>
-            )}
           </label>
           <label className="flex flex-col gap-2">
             <span className="text-xs uppercase tracking-wide text-slate-400">
