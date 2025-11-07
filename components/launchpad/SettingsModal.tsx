@@ -51,8 +51,8 @@ export function SettingsModal({ controller }: SettingsModalProps) {
   const [hideDefaultApps, setHideDefaultApps] = useState(
     controller.settings.hideDefaultApps ?? false
   );
-  const [pageSize, setPageSize] = useState(
-    controller.desktopPageSize.toString()
+  const [pageSize, setPageSize] = useState<number>(
+    controller.desktopPageSize
   );
   const [mobileLayout, setMobileLayout] = useState(
     controller.settings.mobileLayout
@@ -88,7 +88,7 @@ export function SettingsModal({ controller }: SettingsModalProps) {
     setBackgroundType(controllerSettings.backgroundType);
     setBackgroundColor(controllerSettings.backgroundColor);
     setGlassTintColor(controllerSettings.glassTintColor);
-    setPageSize(desktopPageSize.toString());
+    setPageSize(desktopPageSize);
     setHideDefaultApps(controllerSettings.hideDefaultApps ?? false);
     setMobileLayout(controllerSettings.mobileLayout);
   }, [modals.settings, controllerSettings, desktopPageSize]);
@@ -104,7 +104,7 @@ export function SettingsModal({ controller }: SettingsModalProps) {
       blurStrength,
       glassTintColor,
       glassTintOpacity: glassOpacity,
-      pageSize: Number(pageSize),
+      pageSize,
       hideDefaultApps,
       mobileLayout,
     });
@@ -393,17 +393,14 @@ export function SettingsModal({ controller }: SettingsModalProps) {
 
           {!controllerIsMobile && (
             <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Desktop page size
-              </h3>
-              <input
-                type="number"
+              <SliderField
+                label="Desktop page size"
                 min={14}
                 max={56}
                 step={7}
                 value={pageSize}
-                onChange={(event) => setPageSize(event.target.value)}
-                className="w-24 rounded-2xl border border-white/10 bg-slate-900/40 px-4 py-2 text-base text-slate-100 focus:border-sky-400/40 focus:outline-none focus:ring-0"
+                onChange={(value) => setPageSize(value)}
+                display={`${pageSize} apps`}
               />
             </section>
           )}
