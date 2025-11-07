@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sanitizeHttpUrl } from "@lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const urlParam = request.nextUrl.searchParams.get("url");
   const sanitizedUrl = sanitizeHttpUrl(urlParam ?? "");
