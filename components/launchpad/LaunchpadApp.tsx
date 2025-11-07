@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useLaunchpadState } from "@hooks/useLaunchpadState";
 import { useLaunchpadView } from "@hooks/useLaunchpadView";
 import { useMediaQuery } from "@hooks/useMediaQuery";
@@ -28,6 +34,7 @@ export function LaunchpadApp(): JSX.Element {
   const gridViewportRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const [isChangeLogOpen, setIsChangeLogOpen] = useState(false);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
 
   const {
     overlayStyle,
@@ -59,6 +66,55 @@ export function LaunchpadApp(): JSX.Element {
     closeContextMenu,
     contextMenu,
   } = controller;
+  const desktopGridLayout = useMemo(() => {
+    if (isMobileLayout) {
+      return null;
+    }
+    const width = viewportSize.width;
+    if (!width) {
+      return null;
+    }
+    const height = viewportSize.height;
+    const gap =
+      width >= 1280 ? 32 : width >= 1024 ? 28 : 24;
+    const minCardWidth = 160;
+    const minCardHeight = 160;
+    const maxColumnsByWidth = Math.max(
+      1,
+      Math.floor((width + gap) / (minCardWidth + gap))
+    );
+    let columns = Math.min(
+      desktopPageSize,
+      Math.max(3, Math.round(Math.sqrt(desktopPageSize))),
+      maxColumnsByWidth
+    );
+    if (columns < 1) {
+      columns = 1;
+    }
+    let rows = Math.ceil(desktopPageSize / columns);
+    if (height) {
+      const maxRowsByHeight = Math.max(
+        1,
+        Math.floor((height + gap) / (minCardHeight + gap))
+      );
+      if (rows > maxRowsByHeight) {
+        rows = maxRowsByHeight;
+        columns = Math.min(
+          maxColumnsByWidth,
+          Math.max(1, Math.ceil(desktopPageSize / rows))
+        );
+      }
+    }
+    return {
+      columns,
+      rows,
+      gap,
+      style: {
+        gap: `${gap}px`,
+        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+      } as CSSProperties,
+    };
+  }, [desktopPageSize, isMobileLayout, viewportSize.height, viewportSize.width]);
 
   const isContextMenuOpen = Boolean(contextMenu.appId);
   const contextMenuTargetId = contextMenu.appId;
@@ -72,7 +128,7 @@ export function LaunchpadApp(): JSX.Element {
     if (cachedVersion !== APP_VERSION) {
       setIsChangeLogOpen(true);
     }
-  }, []);
+  }, [gridViewportRef]);
 
   const handleCloseChangeLog = () => {
     setIsChangeLogOpen(false);
@@ -105,6 +161,46 @@ export function LaunchpadApp(): JSX.Element {
     return () => {
       navigator.serviceWorker.removeEventListener("message", handleMessage);
       navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+    };
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const viewport = gridViewportRef.current;
+    if (!viewport) {
+      return;
+    }
+    const updateSize = () => {
+      const rect = viewport.getBoundingClientRect();
+      setViewportSize((prev) => {
+        if (prev.width === rect.width && prev.height === rect.height) {
+          return prev;
+        }
+        return { width: rect.width, height: rect.height };
+      });
+    };
+    updateSize();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateSize);
+      return () => {
+        window.removeEventListener("resize", updateSize);
+      };
+    }
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      setViewportSize((prev) => {
+        if (prev.width === width && prev.height === height) {
+          return prev;
+        }
+        return { width, height };
+      });
+    });
+    observer.observe(viewport);
+    return () => {
+      observer.disconnect();
     };
   }, []);
 
@@ -150,6 +246,11 @@ export function LaunchpadApp(): JSX.Element {
                     isListLayout
                       ? "flex w-full flex-col gap-2"
                       : "grid w-full gap-8 sm:gap-6 grid-cols-3 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-7"
+                  }
+                  style={
+                    !isListLayout && !isMobileLayout && desktopGridLayout
+                      ? desktopGridLayout.style
+                      : undefined
                   }
                 >
                   {page.map((app, index) => {
