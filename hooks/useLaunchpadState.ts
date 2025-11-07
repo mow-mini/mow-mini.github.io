@@ -495,7 +495,7 @@ export function useLaunchpadState(isMobileLayout: boolean): LaunchpadController 
       if (!sanitizedUrl) {
         return {
           success: false,
-          message: "Please enter a valid link that starts with https://",
+          message: "Please enter a valid link.",
         };
       }
 
